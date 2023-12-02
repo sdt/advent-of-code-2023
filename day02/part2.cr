@@ -16,20 +16,9 @@ def parse_game(line)
 end
 
 def game_power(game)
-  maximum = {
-    "red" => 0,
-    "green" => 0,
-    "blue" => 0,
-  }
-
-  game[:rounds].each do |round|
-    round.each do |color, count|
-      if count > maximum[color]
-        maximum[color] = count
-      end
-    end
-  end
-  return maximum.values.product
+  colors = [ "red", "green", "blue" ]
+  colors.map { |color| game[:rounds].map( &.fetch(color, 0) ).max }
+        .product
 end
 
 puts AOC.input_lines
