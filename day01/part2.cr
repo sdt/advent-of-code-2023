@@ -12,22 +12,25 @@ Digits = {
   "nine"  => "9",
 }
 
-DigitsRegex = "(#{ (Digits.keys + Digits.values).join('|') })"
+# Digits with the keys reversed
+Rdigits = Hash.zip(Digits.keys.map() { |word| word.reverse }, Digits.values)
+
+# Match a digit, or a digit-word
+DigitsRegex  = /(#{ (Digits.keys  + Digits.values ).join('|') })/
+
+# Match a digit, or a reversed digit-word
+RdigitsRegex = /(#{ (Rdigits.keys + Rdigits.values).join('|') })/
 
 def first_digit(line)
-  m = line.match!(Regex.new(DigitsRegex))
+  # Match the first "digit" we find
+  m = line.match!(DigitsRegex)
   Digits.fetch(m[1], m[1]).to_i
 end
 
 def last_digit(line)
-  regex = Regex.new(DigitsRegex + "$")
-  while line.size() > 0
-    if m = line.match(regex)
-      return Digits.fetch(m[1], m[1]).to_i
-    end
-    line = line.rchop
-  end
-  return 0
+  # Match the first reversed "digit" we find in the reversed line
+  m = line.reverse.match!(RdigitsRegex)
+  Rdigits.fetch(m[1], m[1]).to_i
 end
 
 def calibration_value(line)
