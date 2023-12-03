@@ -33,7 +33,7 @@ def find_gear_ratios(lines, adjacent) : Array(Int32)
   gear = nil
 
   lines.each_with_index do |line, y|
-    line.chars.each_with_index do |c, x|
+    line.chars.push('.').each_with_index do |c, x|
 
     if is_digit(c)
       if !in_number

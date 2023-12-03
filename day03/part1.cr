@@ -32,7 +32,7 @@ def find_part_numbers(lines, adjacent) : Array(Int32)
   value = 0
   is_adjacent = false
   lines.each_with_index do |line, y|
-    line.chars.each_with_index do |c, x|
+    line.chars.push('.').each_with_index do |c, x|
 
     if is_digit(c)
       if !in_number
