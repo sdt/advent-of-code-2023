@@ -26,7 +26,7 @@ def make_adjacency_map(lines) : Hash(Coord, Coord)
 end
 
 def find_gear_ratios(lines, adjacent) : Array(Int32)
-  gear_ratios = Hash(Coord, Array(Int32)).new()
+  gear_ratios = Hash(Coord, { Int32, Int32 }).new({ 0, 1 })
 
   in_number = false
   value = 0
@@ -46,8 +46,8 @@ def find_gear_ratios(lines, adjacent) : Array(Int32)
     else
       if in_number
         if gear
-          gear_ratios[gear] = gear_ratios.fetch(gear, [ ] of Int32)
-                                         .push(value)
+          ratio = gear_ratios[gear]
+          gear_ratios[gear] = { ratio[0] + 1, ratio[1] * value }
         end
         in_number = false
       end
@@ -55,8 +55,8 @@ def find_gear_ratios(lines, adjacent) : Array(Int32)
 
     end
   end
-  return gear_ratios.values.reject { |gears| gears.size < 2 }
-                           .map { |gears| gears.product }
+  return gear_ratios.values.reject { |gears| gears[0] < 2 }
+                           .map    { |gears| gears[1] }
 end
 
 adjacent = make_adjacency_map(AOC.input_lines)
