@@ -5,7 +5,7 @@ class AOC
   end
 
   def self.input_filename : String
-    ARGV.size == 1 ? ARGV[0] : "input.txt"
+    ARGV.size == 1 ? ARGV[0] : ENV.fetch("AOC_INPUT", "input.txt")
   end
 
   def self.input_lines : Array(String)
