@@ -1,25 +1,15 @@
 require "../aoc"
 
 def card_score(line)
-  words = line.split(/:? +/).skip(2)
-  winning = Hash(String, Bool).new(false)
+  count = line.split(/\s*[:|]\s*/, 3)
+              .skip(1)
+              .map(&.split(/\s+/))
+              .reduce { |acc, i| acc & i }
+              .size
 
-  in_my_numbers = false
-  count = 0
-  words.each do |word|
-    if word == "|"
-      in_my_numbers = true
-      next
-    end
-
-    if in_my_numbers
-      if winning[word]
-        count += 1
-      end
-    else
-      winning[word] = true
-    end
-  end
+  # Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+  #_, winners, mine = line.split(/\s*[:|]\s*/, 3)
+  #count = (winners.split(/\s+/).to_set & mine.split(/\s+/).to_set).size
   count == 0 ? 0 : 2 ** (count-1)
 end
 

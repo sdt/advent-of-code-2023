@@ -1,39 +1,27 @@
 require "../aoc"
 
-alias Card = NamedTuple(name: String, matches: Int32, count: Int32)
-
-def parse_card(line) : Card
-  match = /^(Card\s+\d+):\s+(.*)\s+\|\s+(.*)\s*$/.match!(line)
-
-  name            = match[1]
-  winning_numbers = match[2].split(/ +/).map(&.to_i).to_set
-  my_numbers      = match[3].split(/ +/).map(&.to_i).to_set
-
-  {
-    name: name,
-    matches: (winning_numbers & my_numbers).size,
-    count: 1,
-  }
+def card_matches(line)
+  matches = line.split(/\s*[:|]\s*/, 3)
+                .skip(1)
+                .map(&.split(/\s+/))
+                .reduce { |acc, i| acc & i }
+                .size
 end
 
 def apply_card(cards, index)
-  matches = cards[index][:matches]
-  count   = cards[index][:count]
+  matches, count = cards[index]
   (1..matches).each do |n|
-    cards[index + n] = {
-      name: cards[index + n][:name],
-      matches: cards[index + n][:matches],
-      count: cards[index + n][:count] + count,
-    }
+    card = cards[index + n]
+    cards[index + n] = { card[0], card[1] + count }
   end
 end
 
 def apply_cards(cards)
-  cards.each_with_index do |card, index|
+  (0...cards.size).each do |index|
     apply_card(cards, index)
   end
 end
 
-cards = AOC.input_lines.map { |line| parse_card(line) }
+cards = AOC.input_lines.map { |line| { card_matches(line), 1 } }
 apply_cards(cards)
-puts cards.map { |card| card[:count] }.sum
+puts cards.map { |card| card[1] }.sum
