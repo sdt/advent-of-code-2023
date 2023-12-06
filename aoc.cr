@@ -11,6 +11,10 @@ class AOC
   def self.input_lines : Array(String)
     File.read_lines(input_filename)
   end
+
+  def self.input : String
+    File.read(input_filename)
+  end
 end
 
 macro pt!(value)
