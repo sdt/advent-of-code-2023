@@ -33,22 +33,18 @@ class Hand
 
   def best_hand(cards : String) : Type
     non_jokers = cards.chars.reject('J')
-
-    case non_jokers.size
-      when 0
-        return Type::FiveOfAKind
-      when 5
-        return classify(cards)
-      else
-        return non_jokers.uniq
-                         .map{ |card| classify(cards.gsub('J', card)) }
-                         .max
+    if non_jokers.size == 0
+      return Type::FiveOfAKind
     end
 
-  end
+    # Find the bucket with the highest count, and add the jokers to that.
+    # That gives us the best hand in all cases.
+    hist = non_jokers.tally
+    jokers = 5 - non_jokers.size
+    most = hist.values.max
+    high_card = hist.invert[most]
+    hist[high_card] += (5 - non_jokers.size)
 
-  def classify(cards : String) : Type
-    hist = cards.chars.tally
     buckets = hist.size
     product = hist.values.product
 
