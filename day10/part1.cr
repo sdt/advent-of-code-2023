@@ -1,220 +1,200 @@
 require "../aoc"
 require "colorize"
 
-@[Flags]
+alias Grid = Array(String)
+alias Tile = Char
+
+NS = '│'
+WE = '─'
+NE = '└'
+SE = '┌'
+NW = '┘'
+SW = '┐'
+AZ = '▣'
+
+MapIn = "|-LFJ7S"
+MapOut = [ NS, WE, NE, SE, NW, SW, AZ ].join("")
+
+enum Turn
+  Left = -1
+  Straight
+  Right
+end
+
 enum Bearing
-  South
   North
   East
+  South
   West
 
-  NorthEast  = North|East
-  NorthWest  = North|West
-  SouthEast  = South|East
-  SouthWest  = South|West
-
-  Vertical   = North|South
-  Horizontal = East|West
-end
-
-Flip = {
-  Bearing::North => Bearing::South,
-  Bearing::South => Bearing::North,
-  Bearing::East  => Bearing::West,
-  Bearing::West  => Bearing::East,
-}
-
-alias Tile = NamedTuple(
-  entry:   Bearing,
-  exit:    Bearing,
-  display: String,
-  color:   Symbol,
-)
-
-struct Vec2
-  @x : Int32
-  @y : Int32
-
-  def initialize(@x, @y)
+  def turn(turn : Turn) : Bearing
+    case turn
+      when Turn::Left  then left()
+      when Turn::Right then right()
+      else                  self
+    end
   end
 
-  def + (that : Vec2) : Vec2
-    Vec2.new(@x + that.@x, @y + that.@y)
+  def left() : Bearing
+    Bearing.new((self.value + 3) & 3)
   end
 
-  def + (bearing : Bearing) : Vec2
-    return self + Direction[bearing]
+  def right() : Bearing
+    Bearing.new((self.value + 1) & 3)
+  end
+
+  def vec2d() : Vec2d
+    Unit[self.value]
   end
 end
 
-Direction = {
-  Bearing::South => Vec2.new(0, +1),
-  Bearing::North => Vec2.new(0, -1),
-  Bearing::East  => Vec2.new(+1, 0),
-  Bearing::West  => Vec2.new(-1, 0),
-}
+class Vec2d
+  getter x : Int32
+  getter y : Int32
 
-TileMap = {
-  'S' => {
-    entry:   Bearing::All,
-    exit:    Bearing::All,
-    display: "◍",
-    color:   :blue,
-  },
-  '.' => {
-    entry:   Bearing::None,
-    exit:    Bearing::None,
-    display: ".",
-    color:   :default,
-  },
-  '|' => {
-    entry:   Bearing::Vertical,
-    exit:    Bearing::Vertical,
-    display: "║",
-    color:   :light_green,
-  },
-  '-' => {
-    entry:   Bearing::Horizontal,
-    exit:    Bearing::Horizontal,
-    display: "═",
-    color:   :light_green,
-  },
-  'L' => {
-    entry:   Bearing::SouthWest,
-    exit:    Bearing::NorthEast,
-    display: "╚",
-    color:   :light_green,
-  },
-  'J' => {
-    entry:   Bearing::SouthEast,
-    exit:    Bearing::NorthWest,
-    display: "╝",
-    color:   :light_green,
-  },
-  'F' => {
-    entry:   Bearing::NorthWest,
-    exit:    Bearing::SouthEast,
-    display: "╔",
-    color:   :light_green,
-  },
-  '7' => {
-    entry:   Bearing::NorthEast,
-    exit:    Bearing::SouthWest,
-    display: "╗",
-    color:   :light_green,
-  },
-}
-
-class Actor
-  @pos     : Vec2
-  @bearing : Bearing
-  @display : Char
-  @moves   : Int32 = 0
-  @alive   : Bool = true
-
-  def initialize(@pos, @bearing, @display)
+  def initialize(@x : Int32, @y : Int32)
   end
 
-  def move(new_bearing)
-    @pos += @bearing
-    @bearing = new_bearing
-    @moves += 1
+  def + (that : Vec2d) : Vec2d
+    Vec2d.new(@x + that.x, @y + that.y)
   end
 
-  def kill()
-    @alive = false
+  def + (that : Bearing) : Vec2d
+    self + that.vec2d
+  end
+
+  def == (that : Vec2d) : Bool
+    (@x == that.x) && (@y == that.y)
+  end
+
+  def to_s() : String
+    "(#{@x},#{@y})"
   end
 end
+
+# LH coord system x right, y down
+
+Unit = [
+  Vec2d.new( 0, -1), # North
+  Vec2d.new(+1,  0), # East
+  Vec2d.new( 0, +1), # South
+  Vec2d.new(-1,  0), # West
+];
+
+Move = {
+  Bearing::North => {
+    SW => Turn::Left,
+    NS => Turn::Straight,
+    SE => Turn::Right,
+    NS => Turn::Straight,
+  },
+  Bearing::East => {
+    NW => Turn::Left,
+    WE => Turn::Straight,
+    SW => Turn::Right,
+  },
+  Bearing::South => {
+    NE => Turn::Left,
+    NS => Turn::Straight,
+    NW => Turn::Right,
+  },
+  Bearing::West => {
+    SE => Turn::Left,
+    WE => Turn::Straight,
+    NE => Turn::Right,
+  },
+}
 
 class Game
-  @grid  : Array(String)
-  @start : Vec2
-  @actor : Array(Actor)
+  @grid : Grid
+  @pos : Vec2d
+  @bearing : Bearing
+  @start_pos : Vec2d
+  @start_bearing : Bearing
 
-  def initialize(lines)
-    @grid = lines
-    @start = find_start_pos(@grid)
-    @actor = [
-      Actor.new(@start, Bearing::North, 'N'),
-      Actor.new(@start, Bearing::South, 'S'),
-      Actor.new(@start, Bearing::East,  'E'),
-      Actor.new(@start, Bearing::West,  'W'),
-    ] of Actor
+  def initialize(lines : Array(String))
+    @grid = lines.map(&.tr(MapIn, MapOut))
+    @pos = @start_pos = find_start_pos
+    @bearing = @start_bearing = find_start_bearing
   end
 
-  def tile(pos : Vec2) : Tile
-    c = @grid[pos.@y][pos.@x]
-    TileMap[c]
-  end
+  def move() : Bool
+    next_pos = @pos + @bearing
+    next_tile = get_tile(next_pos)
 
-  def step()
-    @actor.select(&.@alive).each do |actor|
-      move(actor)
+    if next_pos == @start_pos
+      @pos = next_pos
+      false
+    elsif turn = Move[@bearing].fetch(next_tile, nil)
+      @pos = next_pos
+      @bearing = @bearing.turn(turn)
+      true
+    else
+      false
     end
   end
 
-  def move(actor : Actor) : Bool
-    from = tile(actor.@pos)
-    if (actor.@bearing.value & from[:exit].value) == 0
-      actor.kill()
-      return false
+  def get_tile(pos : Vec2d) : Tile
+    if pos.y < 0 || pos.y >= @grid.size
+      return '.'
+    end
+    if pos.x < 0 || pos.x >= @grid[0].size
+      return '.'
     end
 
-    to_pos = actor.@pos + actor.@bearing
-    to = tile(actor.@pos + actor.@bearing)
-    if (actor.@bearing.value & to[:entry].value) == 0
-      actor.kill()
-      return false
-    end
-
-    actor.move(Bearing.new(Flip[actor.@bearing].value ^ to[:exit].value))
-
-    true
+    return @grid[pos.y][pos.x]
   end
 
-  def draw()
-    return
+  def print()
+    puts
     @grid.each_with_index do |row, y|
-      row.chars.each_with_index do |c, x|
-        pos = Vec2.new(x, y)
-        if actor = @actor.find{ |actor| actor.@alive && actor.@pos == pos }
-          print actor.@display.colorize(actor.@alive ? :green : :red)
+      row.chars.each_with_index do |tile, x|
+        p = Vec2d.new(x, y)
+        if p == @pos
+          print "☺".colorize(:yellow)
+        elsif p == @start_pos
+          print tile.colorize(:blue)
         else
-          tile = TileMap[c]
-          print tile[:display].colorize(tile[:color])
+          print tile
         end
       end
       print "\n"
     end
-    print "\n"
+    puts
+    sleep 0.05
   end
 
-  def ended()
-    @actor.any?{ |actor| actor.@alive && actor.@pos == @start }
-  end
-
-  def run()
-    draw()
-    step()
-    while !ended()
-      draw()
-      step()
-    end
-    draw()
-  end
-end
-
-def find_start_pos(grid)
-  grid.each_with_index do |row, y|
-    row.chars.each_with_index do |c, x|
-      if c == 'S'
-        return Vec2.new(x, y)
+  def find_start_pos() : Vec2d
+    @grid.each_with_index do |row, y|
+      row.chars.each_with_index do |tile, x|
+        if tile == AZ
+          return Vec2d.new(x, y)
+        end
       end
     end
+    Vec2d.new(-1, -1)
   end
-  Vec2.new(-1, -1)
+
+  def find_start_bearing() : Bearing
+    bearing = Bearing::North
+    loop do
+      next_pos = @start_pos + bearing
+      next_tile = get_tile(next_pos)
+      if Move[bearing].fetch(next_tile, nil)
+        return bearing
+      end
+      bearing = bearing.turn(Turn::Right)
+    end
+  end
+
 end
 
 game = Game.new(AOC.input_lines)
-game.run
-puts game.@actor.select(&.@alive).map(&.@moves).max // 2
+game.print
+moves = 0
+while game.move
+  game.print
+  moves += 1
+end
+game.print
+puts (moves+1) // 2
