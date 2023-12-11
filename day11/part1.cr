@@ -50,6 +50,6 @@ end
 original_pairs = make_pairs(AOC.input_lines)
 offset_pairs = make_offset_pairs(original_pairs)
 
-puts offset_pairs.each_cartesian(offset_pairs)
-                 .map { |a, b| (a[0] - b[0]).abs + (a[1] - b[1]).abs }
-                 .sum // 2
+puts offset_pairs.each_combination(2)
+                 .map { |a| (a[0][0] - a[1][0]).abs + (a[0][1] - a[1][1]).abs }
+                 .sum
