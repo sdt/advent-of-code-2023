@@ -1,8 +1,11 @@
 require "../aoc"
 
+N = 4
+
 def parse(line)
   pattern, counts = line.split(/\s+/)
-  { pattern + ".", counts.split(',').map(&.to_i) }
+  pattern = ([ pattern ] * N).join("?")
+  { pattern + ".", counts.split(',').map(&.to_i) * N }
 end
 
 enum Result
@@ -26,11 +29,12 @@ def solve(pattern, counts, depth)
   #puts "#{" "*depth}Solve #{pattern} with #{counts} at depth #{depth}"
 
   count, *counts = counts
+  remainder = counts.size == 0 ? 0 : counts.sum + counts.size - 1
   block = ("#" * count) + "."
   inset = 0
   total = 0
 
-  while block.size + inset <= pattern.size
+  while block.size + inset + remainder <= pattern.size
     case match(block, pattern, inset, depth)
       when Result::Match
         total += solve(pattern[inset + block.size..], counts, depth+1)
@@ -60,5 +64,5 @@ def match(block, pattern, inset, depth)
 end
 
 puts AOC.input_lines
-     .map { |line| solve(*parse(line), 0) }
+     .map { |line| puts(line) ; solve(*parse(line), 0) }
      .sum
