@@ -1,58 +1,48 @@
 require "../aoc"
 
 def parse(line)
-  pattern, rhs = line.split(/\s+/)
-  counts = rhs.split(',').map(&.to_i)
-
-  total = counts.sum
-  knowns = pattern.count('#')
-  unknowns = pattern.count('?')
-
-  ons = total - knowns
-  offs = unknowns - ons
-
-  { pattern, offs, ons, counts }
+  pattern, counts = line.split(/\s+/)
+  { pattern + ".", counts.split(',').map(&.to_i) }
 end
 
-def solve(pattern, offs, ons, counts)
-
-  if offs == 0 && ons == 0
-    return is_full_match(pattern, counts) ? 1 : 0
+def solve(pattern, counts, depth)
+  if counts.size == 0
+    if pattern.count('#') == 0
+      #puts "#{" "*depth}Solved at depth #{depth}"
+      return 1
+    else
+      #puts "#{" "*depth}Not solved at depth #{depth} with #{pattern} remaining"
+      return 0
+    end
   end
 
+  #puts "#{" "*depth}Solve #{pattern} with #{counts} at depth #{depth}"
+
+  count, *counts = counts
+  block = ("#" * count) + "."
   total = 0
-  if offs > 0
-    off_pattern = pattern.sub('?', '.')
-    if is_partial_match(off_pattern, counts)
-      total += solve(off_pattern, offs-1, ons, counts)
-    end
-  end
-  if ons > 0
-    on_pattern = pattern.sub('?', '#')
-    if is_partial_match(on_pattern, counts)
-      total += solve(on_pattern, offs, ons-1, counts)
-    end
-  end
 
+  while block.size <= pattern.size
+    if match?(block, pattern, depth)
+      total += solve(pattern[block.size..], counts, depth+1)
+    end
+    block = "." + block
+  end
   total
 end
 
-def is_full_match(record, counts)
-  record.split(/\.+/, remove_empty: true).map(&.size) == counts
-end
-
-def is_partial_match(record, counts)
-  partial = record.sub(/\?.*$/, "").split(/\.+/, remove_empty: true).map(&.size)
-  return true if partial.size == 0
-  return false if partial.size > counts.size
-  # All but the last partial must be the same as the counts.
-  # The last partial must be less or equal.
-  (0 ... partial.size-1).each do |i|
-    return false if partial[i] != counts[i]
+def match?(block, pattern, depth)
+  block.chars.each_with_index do |b, i|
+    p = pattern[i]
+    if (p != '?') && (p != b)
+      #puts "#{" "*depth}Matching #{block} against #{pattern} false"
+      return false
+    end
   end
-  return partial[-1] <= counts[partial.size-1]
+  #puts "#{" "*depth}Matching #{block} against #{pattern} TRUE"
+  true
 end
 
-p AOC.input_lines
-     .map { |line| solve(*parse(line)) }
+puts AOC.input_lines
+     .map { |line| solve(*parse(line), 0) }
      .sum
