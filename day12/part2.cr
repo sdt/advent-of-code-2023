@@ -1,6 +1,6 @@
 require "../aoc"
 
-N = 4
+N = 5
 
 def parse(line)
   pattern, counts = line.split(/\s+/)
@@ -14,30 +14,38 @@ enum Result
   Stop
 end
 
+Memo = Hash(String, Int64).new(-1)
 
-def solve(pattern, counts, depth)
+def solve(pattern, counts) : Int64
+  key = pattern + counts.to_s
+  cached = Memo[key]
+  if cached > 0
+    return cached
+  end
+  cached = _solve(pattern, counts)
+  Memo[key] = cached
+  cached
+end
+
+def _solve(pattern, counts) : Int64
   if counts.size == 0
     if pattern.count('#') == 0
-      #puts "#{" "*depth}Solved at depth #{depth}"
-      return 1
+      return 1.to_i64
     else
-      #puts "#{" "*depth}Not solved at depth #{depth} with #{pattern} remaining"
-      return 0
+      return 0.to_i64
     end
   end
-
-  #puts "#{" "*depth}Solve #{pattern} with #{counts} at depth #{depth}"
 
   count, *counts = counts
   remainder = counts.size == 0 ? 0 : counts.sum + counts.size - 1
   block = ("#" * count) + "."
   inset = 0
-  total = 0
+  total : Int64 = 0.to_i64
 
   while block.size + inset + remainder <= pattern.size
-    case match(block, pattern, inset, depth)
+    case match(block, pattern, inset)
       when Result::Match
-        total += solve(pattern[inset + block.size..], counts, depth+1)
+        total += solve(pattern[inset + block.size..], counts)
       when Result::Stop
         return total
     end
@@ -46,23 +54,20 @@ def solve(pattern, counts, depth)
   total
 end
 
-def match(block, pattern, inset, depth)
+def match(block, pattern, inset)
   if inset > 0 && pattern[inset-1] == '#'
-    #puts "#{" "*depth}Matching #{"."*inset}#{block} against #{pattern} STOP"
     return Result::Stop
   end
 
   block.chars.each_with_index do |b, i|
     p = pattern[i + inset]
     if (p != '?') && (p != b)
-      #puts "#{" "*depth}Matching #{"."*inset}#{block} against #{pattern} false"
       return Result::Mismatch
     end
   end
-  #puts "#{" "*depth}Matching #{"."*inset}#{block} against #{pattern} TRUE"
   Result::Match
 end
 
 puts AOC.input_lines
-     .map { |line| puts(line) ; solve(*parse(line), 0) }
+     .map { |line| puts(line) ; solve(*parse(line)) }
      .sum
