@@ -1,18 +1,15 @@
 require "../aoc"
 
 def parse_map(lines)
-  charlines = lines.map(&.chars)
-
-  rows = charlines.map           { |chars| parse_line(chars) }
-  cols = charlines.transpose.map { |chars| parse_line(chars) }
+  rows = lines.map { |line| parse_line(line) }
+  lines = lines.map(&.chars).transpose.map(&.join(""))
+  cols = lines.map { |line| parse_line(line) }
 
   [ { rows, 100 }, { cols, 1 } ]
 end
 
-def parse_line(chars)
-  chars.each_with_index
-       .map { |char, i| (char == '#') ? 1 << i : 0 }
-       .reduce(0) { |bits, bit| bits | bit }
+def parse_line(line)
+  line.tr("#.", "10").to_i(base: 2)
 end
 
 def find_line_of_reflection(array)
