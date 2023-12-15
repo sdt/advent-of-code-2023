@@ -21,18 +21,14 @@ class Lens
 end
 
 class Carton
-  @lenses = Array(Lens).new
+  @lenses = Hash(String, Int32).new
 
   def remove_lens(label)
-    @lenses.reject! { |lens| lens.label == label }
+    @lenses.delete(label)
   end
 
   def insert_lens(label, focal_length)
-    if lens = @lenses.find { |lens| lens.label == label }
-      lens.focal_length = focal_length
-    else
-      @lenses.push(Lens.new(label, focal_length))
-    end
+    @lenses[label] = focal_length
   end
 
   def empty? : Bool
@@ -40,12 +36,13 @@ class Carton
   end
 
   def to_s : String
-    @lenses.map(&.to_s).join
+    @lenses.each.map { |label, focal_length| "[#{label} #{focal_length}]" }
   end
 
   def focusing_power(box_index : Int32)
-    @lenses.each_with_index(1)
-           .map { |lens, index| lens.focal_length * index * box_index }
+    @lenses.values
+           .each_with_index(1)
+           .map { |focal_length, index| focal_length * index * box_index }
            .sum
   end
 end
