@@ -93,12 +93,14 @@ class Grid
   @beams : Array(Beam)
   @energised : Set(Vec2d)
   @mirrors : Hash(Vec2d, Mirror)
+  @seen : Set(Beam)
   @size : Vec2d
 
   def initialize(lines : Array(String))
     @beams = [ Beam.new(Vec2d.new(-1, 0), Bearing::East) ]
     @energised = Set(Vec2d).new
     @mirrors = Hash(Vec2d, Mirror).new('.')
+    @seen = Set(Beam).new
     @size = Vec2d.new(lines[0].size, lines.size)
 
     lines.each_with_index do |line, y|
@@ -142,7 +144,7 @@ class Grid
 
   def step(beam : Beam) : Array(Beam)
     beam = beam.move()
-    if on_map?(beam.@pos)
+    if on_map?(beam.@pos) && @seen.add?(beam)
       mirror = @mirrors[beam.@pos]
       beam.split(mirror)
     else
