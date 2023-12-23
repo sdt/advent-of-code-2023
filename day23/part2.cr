@@ -25,59 +25,41 @@ class Map
     seen = Array(Bool).new(@w * @h, false)
     seen[@start] = true
 
-    ok, length = solve(seen, @start + @w)
-    length
+    solve(seen, @start + @w)
   end
 
-  def solve(seen : Array(Bool), pos : Int32) : { Bool, Int32 }
+  def solve(seen : Array(Bool), pos : Int32) : Int32
     if pos == @end
-      return { true, 1 } if pos == @end
+      return 1 if pos == @end
     end
 
     #puts "Trying #{pos % @w}, #{pos // @w}"
 
-    solved = false
-    longest = 0
+    longest = -1
     seen[pos] = true
 
     up = pos - @w
     if !seen[up] && @cell[up] != '#'
-      sub_solved, length = solve(seen, up)
-      if sub_solved
-        longest = max(longest, length)
-        solved = true
-      end
+      longest = max(longest, solve(seen, up))
     end
 
     rt = pos + 1
     if !seen[rt] && @cell[rt] != '#'
-      sub_solved, length = solve(seen, rt)
-      if sub_solved
-        longest = max(longest, length)
-        solved = true
-      end
+      longest = max(longest, solve(seen, rt))
     end
 
     dn = pos + @w
     if !seen[dn] && @cell[dn] != '#'
-      sub_solved, length = solve(seen, dn)
-      if sub_solved
-        longest = max(longest, length)
-        solved = true
-      end
+      longest = max(longest, solve(seen, dn))
     end
 
     lf = pos - 1
     if !seen[lf] && @cell[lf] != '#'
-      sub_solved, length = solve(seen, lf)
-      if sub_solved
-        longest = max(longest, length)
-        solved = true
-      end
+      longest = max(longest, solve(seen, lf))
     end
 
     seen[pos] = false
-    { solved, longest + 1 }
+    longest > 0 ? longest + 1 : -1
   end
 end
 
