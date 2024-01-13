@@ -3,12 +3,47 @@ require "../aoc"
 alias Pt = { Int32, Int32 }
 
 class History
+  @start_time : Int32
+  @sizes : Array(Int32)
+  @loop : Array(Int32) | Nil
+
   def initialize(@start_time : Int32, size : Int32)
     @sizes = Array(Int32).new(1, size)
   end
 
+  def complete? : Bool
+    @loop != nil
+  end
+
   def add(size : Int32)
+    return if complete?
+
     @sizes << size
+
+    # -4 -3 -2 -1
+    #  A  B  A  B
+    if (@sizes.size >= 4) && (@sizes[-2] < @sizes[-1]) && (@sizes[-1] == @sizes[-3]) && (@sizes[-2] == @sizes[-4])
+      time = @start_time + @sizes.size - 1
+
+      @loop = [ @sizes[-2], @sizes[-1] ]
+      @sizes.pop(4)
+    end
+  end
+
+  def to_s(io)
+    n = 8
+    io << "start="
+    io << @start_time
+    io << ' '
+    if @sizes.size > n
+      io << '[' << @sizes[0 ... n-2].join(", ")
+      io << ", ... "
+      io << @sizes[-2] << ", " << @sizes[-1] << "]"
+    else
+      io << @sizes
+    end
+    io << " => "
+    io << @loop
   end
 end
 
@@ -17,13 +52,15 @@ class HistorySet
 
   def add(tile_xy : Pt, size : Int32, time : Int32)
     tx, ty = tile_xy
-    if (tx == 0 && ty == 0) || (tx.abs + ty.abs == 2)
-      if history = @history.fetch(tile_xy, nil)
-        history.add(size)
-      else
-        puts "Creating new history set for #{tile_xy} at time #{time}"
-        @history[tile_xy] = History.new(time, size)
+    if history = @history.fetch(tile_xy, nil)
+      return if history.complete?
+      history.add(size)
+      if history.complete?
+        puts "Loop (#{history.@sizes.size}) detected in #{tile_xy} at time #{time}: #{history}"
       end
+    else
+      #puts "Creating new history set for #{tile_xy} at time #{time}"
+      @history[tile_xy] = History.new(time, size)
     end
   end
 end
@@ -162,15 +199,17 @@ class Garden
       t = step - 1
       n = positions.size
       #positions.print
-      puts "#{ t },#{ n }"
+#      puts "#{ t },#{ n }"
 #      puts
       positions = step(positions)
+      positions.update_histories(history, step)
     end
 #    positions.print
 #    puts "#{ steps },#{ positions.size }"
     positions.size
+
   end
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(50)
+puts g.part2(1000)
