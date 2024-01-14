@@ -5,14 +5,15 @@ alias Pt = { Int32, Int32 }
 class History
   @start_time : Int32
   @sizes : Array(Int32)
-  @loop : Array(Int32) | Nil
+  @loop : Array(Int32)
 
   def initialize(@start_time : Int32, size : Int32)
     @sizes = Array(Int32).new(1, size)
+    @loop = Array(Int32).new
   end
 
   def complete? : Bool
-    @loop != nil
+    @loop.size > 0
   end
 
   def add(size : Int32)
@@ -25,7 +26,8 @@ class History
     if (@sizes.size >= 4) && (@sizes[-2] < @sizes[-1]) && (@sizes[-1] == @sizes[-3]) && (@sizes[-2] == @sizes[-4])
       time = @start_time + @sizes.size - 1
 
-      @loop = [ @sizes[-2], @sizes[-1] ]
+      @loop << @sizes[-2]
+      @loop << @sizes[-1]
       @sizes.pop(4)
     end
   end
@@ -56,12 +58,74 @@ class HistorySet
       return if history.complete?
       history.add(size)
       if history.complete?
-        puts "Loop (#{history.@sizes.size}) detected in #{tile_xy} at time #{time}: #{history}"
+        #puts "Loop (#{history.@sizes.size}) detected in #{tile_xy} at time #{time}: #{history}"
       end
     else
       #puts "Creating new history set for #{tile_xy} at time #{time}"
       @history[tile_xy] = History.new(time, size)
     end
+  end
+
+  def complete? : Bool
+    n = 3
+    m = 2
+    tiles = { {-n,0}, {n,0}, {0,n}, {0,-n}, {m,m}, {-m,m}, {m,-m}, {-m,-m} }
+
+    tiles.all? { |tile_xy| @history.has_key?(tile_xy) && @history[tile_xy].complete? }
+  end
+
+  def axis(dir_xy : Pt, t : Int32)
+    n = 2
+    dx, dy = dir_xy
+    t0 = { n     * dx, n     * dy }
+    t1 = { (n+1) * dx, (n+1) * dy }
+
+    t0 = @history[t0].@start_time
+    dt = @history[t1].@start_time - t0
+    tiles = (t - t0) // dt + n
+
+    puts "#{ dir_xy }"
+    puts "Spawn period dt: #{dt}"
+    puts "Spawn offset t0: #{t0}"
+    puts "Spawn offset n: #{n}"
+    puts "Tiles: #{tiles}"
+
+    prefix = @history[t1].@sizes
+    puts "Prefix: #{prefix.size}"
+
+    loop do
+      tile_start_time = (tiles - n) * dt + t0
+      #puts "  #{dx*tiles}, #{dy*tiles}: start time = #{tile_start_time}"
+      offset = t - tile_start_time
+      break if offset >= prefix.size
+      #puts "  #{dx*tiles}, #{dy*tiles}: offset = #{offset}"
+      puts "  #{dx*tiles}, #{dy*tiles}: count = #{prefix[offset]}"
+
+      tiles -= 1
+    end
+
+    loop = @history[t1].@loop
+    r = 0
+    if tiles.even?
+      r = (loop[0] + loop[1]) * tiles // 2
+    else
+      r = (loop[0] + loop[1]) * (tiles + 1) // 2 - loop[1]
+    end
+
+    remainder = 0
+    while tiles > 0
+      tile_start_time = (tiles - n) * dt + t0
+      offset = (t - tile_start_time - prefix.size) & 1
+      puts "  #{dx*tiles}, #{dy*tiles}: count = #{loop[offset]}"
+
+      remainder += loop[offset]
+
+      tiles -= 1
+    end
+
+    puts "Remainder: counted=#{ remainder} computed=#{r}"
+
+    puts
   end
 end
 
@@ -195,21 +259,25 @@ class Garden
     history = HistorySet.new
     positions.update_histories(history, 0)
 
-    (1 .. steps).each do |step|
-      t = step - 1
-      n = positions.size
-      #positions.print
-#      puts "#{ t },#{ n }"
-#      puts
+    t = 1
+    while !history.complete?
       positions = step(positions)
-      positions.update_histories(history, step)
+      positions.update_histories(history, t)
+      t += 1
     end
 #    positions.print
 #    puts "#{ steps },#{ positions.size }"
-    positions.size
+
+    # {0,N} line
+
+    xt = 76
+    history.axis({0, 1},  xt)
+    history.axis({0, -1}, xt)
+    history.axis({1, 0},  xt)
+    history.axis({-1, 0}, xt)
 
   end
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(1000)
+puts g.part2(200)
