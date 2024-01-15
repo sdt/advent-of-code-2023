@@ -74,7 +74,7 @@ class HistorySet
     tiles.all? { |tile_xy| @history.has_key?(tile_xy) && @history[tile_xy].complete? }
   end
 
-  def centre(dir_xy : Pt, t : Int32)
+  def centre(dir_xy : Pt, t : Int32) : Int64
     h = @history[dir_xy]
 
     t -= h.@sizes.size
@@ -85,10 +85,10 @@ class HistorySet
     puts "Subtotal: #{total}"
     puts
 
-    total
+    total.to_i64
   end
 
-  def axis(dir_xy : Pt, t : Int32)
+  def axis(dir_xy : Pt, t : Int32) : Int64
     n = 2
     dx, dy = dir_xy
     tile0 = { n     * dx, n     * dy }
@@ -96,7 +96,7 @@ class HistorySet
 
     t0 = @history[tile0].@start_time
     dt = @history[tile1].@start_time - t0
-    tiles = (t - t0) // dt + n
+    tiles : Int64 = ((t - t0) // dt + n).to_i64
 
     puts "#{ dir_xy }"
     puts "Spawn period dt: #{dt}"
@@ -107,7 +107,7 @@ class HistorySet
     prefix = @history[tile1].@sizes
     puts "Prefix: #{prefix.size}"
 
-    total = 0
+    total = 0_i64
 
     loop do
       tile_start_time = (tiles - n) * dt + t0
@@ -123,9 +123,9 @@ class HistorySet
     end
 
     loop = @history[tile1].@loop
-    r = 0
-    a = loop[(t + 0) & 1]
-    b = loop[(t + 1) & 1]
+    r = 0_i64
+    a = (loop[(t + 0) & 1]).to_i64
+    b = (loop[(t + 1) & 1]).to_i64
     puts "Tiles remaining: #{tiles}"
     if tiles.even?
       r = (a + b) * tiles // 2
@@ -135,15 +135,15 @@ class HistorySet
     total += r
 
     remainder = 0
-    while tiles > 0
-      tile_start_time = (tiles - n) * dt + t0
-      offset = (t - tile_start_time - prefix.size) & 1
-      puts "  #{dx*tiles}, #{dy*tiles}: count = #{loop[offset]}"
-
-      remainder += loop[offset]
-
-      tiles -= 1
-    end
+#    while tiles > 0
+#      tile_start_time = (tiles - n) * dt + t0
+#      offset = (t - tile_start_time - prefix.size) & 1
+#      puts "  #{dx*tiles}, #{dy*tiles}: count = #{loop[offset]}"
+#
+#      remainder += loop[offset]
+#
+#      tiles -= 1
+#    end
 
     puts "Remainder: counted=#{ remainder} computed=#{r}"
     puts "Subtotal: #{total}"
@@ -152,7 +152,7 @@ class HistorySet
     total
   end
 
-  def quadrant(dir_xy : Pt, t : Int32)
+  def quadrant(dir_xy : Pt, t : Int32) : Int64
     n = 2
     dx, dy = dir_xy
     tile0 = { n     * dx, dy }    # eg. 2,1
@@ -160,7 +160,7 @@ class HistorySet
 
     t0 = @history[tile0].@start_time
     dt = @history[tile1].@start_time - t0
-    diags = (t - t0) // dt + n
+    diags : Int64 = ((t - t0) // dt + n).to_i64
 
     puts "#{ dir_xy }"
     puts "Spawn period dt: #{dt}"
@@ -172,7 +172,7 @@ class HistorySet
     puts "Prefix: #{prefix.size}"
     puts
 
-    total = 0
+    total = 0_i64
 
     loop do
       diag_start_time = (diags - n) * dt + t0
@@ -192,7 +192,7 @@ class HistorySet
     b = loop[(t + 0) & 1]
     puts "A B = #{a} #{b}"
 
-    r = 0
+    r = 0_i64
     if diags.even?
       r = (diags * a + (diags + 2) * b) * diags // 4
     else
@@ -201,15 +201,15 @@ class HistorySet
     total += r
 
     remainder = 0
-    while diags > 0
-      diag_start_time = (diags - n) * dt + t0
-      offset = (t - diag_start_time - prefix.size) & 1
-      puts "  #{dx*diags}, #{dy}: count = #{loop[offset]} * #{diags}"
-
-      remainder += loop[offset] * diags
-
-      diags -= 1
-    end
+#    while diags > 0
+#      diag_start_time = (diags - n) * dt + t0
+#      offset = (t - diag_start_time - prefix.size) & 1
+#      puts "  #{dx*diags}, #{dy}: count = #{loop[offset]} * #{diags}"
+#
+#      remainder += loop[offset] * diags
+#
+#      diags -= 1
+#    end
     puts "Remainder: counted=#{ remainder} computed=#{r}"
     puts "Subtotal: #{total}"
     puts
@@ -341,7 +341,7 @@ class Garden
     after
   end
 
-  def part2(steps)
+  def part2(steps) : Int64
     positions = TileSet.new(@w, @h)
     positions.add(*@start)
 
@@ -361,7 +361,7 @@ class Garden
 
     puts "Time: #{steps}"
 
-    total = 0
+    total = 0_i64
 
     total += history.centre({0, 0}, steps)
 
@@ -381,4 +381,4 @@ class Garden
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(5000)
+puts g.part2(26501365)
