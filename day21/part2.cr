@@ -188,6 +188,18 @@ class HistorySet
     end
 
     loop = @history[tile0].@loop
+    a = loop[(t + 1) & 1]
+    b = loop[(t + 0) & 1]
+    puts "A B = #{a} #{b}"
+
+    r = 0
+    if diags.even?
+      r = (diags * a + (diags + 2) * b) * diags // 4
+    else
+      r = ((diags + 1) * a + (diags - 1) * b) * (diags + 1) // 4
+    end
+    total += r
+
     remainder = 0
     while diags > 0
       diag_start_time = (diags - n) * dt + t0
@@ -198,9 +210,11 @@ class HistorySet
 
       diags -= 1
     end
+    puts "Remainder: counted=#{ remainder} computed=#{r}"
+    puts "Subtotal: #{total}"
+    puts
 
-
-    0
+    total
   end
 end
 
@@ -349,17 +363,17 @@ class Garden
 
     total = 0
 
-#    total += history.centre({0, 0}, steps)
-#
-#    total += history.axis({0, 1},  steps)
-#    total += history.axis({0, -1}, steps)
-#    total += history.axis({1, 0},  steps)
-#    total += history.axis({-1, 0}, steps)
-#
+    total += history.centre({0, 0}, steps)
+
+    total += history.axis({0, 1},  steps)
+    total += history.axis({0, -1}, steps)
+    total += history.axis({1, 0},  steps)
+    total += history.axis({-1, 0}, steps)
+
     total += history.quadrant({ 1,  1}, steps)
-#    total += history.quadrant({-1,  1}, steps)
-#    total += history.quadrant({-1, -1}, steps)
-#    total += history.quadrant({ 1, -1}, steps)
+    total += history.quadrant({-1,  1}, steps)
+    total += history.quadrant({-1, -1}, steps)
+    total += history.quadrant({ 1, -1}, steps)
 
     total
 
@@ -367,4 +381,4 @@ class Garden
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(77)
+puts g.part2(5000)
