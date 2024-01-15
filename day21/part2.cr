@@ -74,6 +74,20 @@ class HistorySet
     tiles.all? { |tile_xy| @history.has_key?(tile_xy) && @history[tile_xy].complete? }
   end
 
+  def centre(dir_xy : Pt, t : Int32)
+    h = @history[dir_xy]
+
+    t -= h.@sizes.size
+
+    puts "#{ dir_xy }"
+    puts "  #{dir_xy[0]}, #{dir_xy[1]}: count = #{h.@loop[t & 1]}"
+    total = h.@loop[t & 1]
+    puts "Subtotal: #{total}"
+    puts
+
+    total
+  end
+
   def axis(dir_xy : Pt, t : Int32)
     n = 2
     dx, dy = dir_xy
@@ -93,6 +107,8 @@ class HistorySet
     prefix = @history[t1].@sizes
     puts "Prefix: #{prefix.size}"
 
+    total = 0
+
     loop do
       tile_start_time = (tiles - n) * dt + t0
       #puts "  #{dx*tiles}, #{dy*tiles}: start time = #{tile_start_time}"
@@ -101,16 +117,22 @@ class HistorySet
       #puts "  #{dx*tiles}, #{dy*tiles}: offset = #{offset}"
       puts "  #{dx*tiles}, #{dy*tiles}: count = #{prefix[offset]}"
 
+      total += prefix[offset]
+
       tiles -= 1
     end
 
     loop = @history[t1].@loop
     r = 0
+    a = loop[(t + 0) & 1]
+    b = loop[(t + 1) & 1]
+    puts "Tiles remaining: #{tiles}"
     if tiles.even?
-      r = (loop[0] + loop[1]) * tiles // 2
+      r = (a + b) * tiles // 2
     else
-      r = (loop[0] + loop[1]) * (tiles + 1) // 2 - loop[1]
+      r = (a + b) * (tiles - 1) // 2 + a
     end
+    total += r
 
     remainder = 0
     while tiles > 0
@@ -124,8 +146,10 @@ class HistorySet
     end
 
     puts "Remainder: counted=#{ remainder} computed=#{r}"
-
+    puts "Subtotal: #{total}"
     puts
+
+    total
   end
 end
 
@@ -270,14 +294,19 @@ class Garden
 
     # {0,N} line
 
-    xt = 76
-    history.axis({0, 1},  xt)
-    history.axis({0, -1}, xt)
-    history.axis({1, 0},  xt)
-    history.axis({-1, 0}, xt)
+    puts "Time: #{steps}"
+
+    total = 0
+    total += history.centre({0, 0}, steps)
+    total += history.axis({0, 1},  steps)
+    total += history.axis({0, -1}, steps)
+    total += history.axis({1, 0},  steps)
+    total += history.axis({-1, 0}, steps)
+
+    total
 
   end
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(200)
+puts g.part2(45)
