@@ -91,11 +91,11 @@ class HistorySet
   def axis(dir_xy : Pt, t : Int32)
     n = 2
     dx, dy = dir_xy
-    t0 = { n     * dx, n     * dy }
-    t1 = { (n+1) * dx, (n+1) * dy }
+    tile0 = { n     * dx, n     * dy }
+    tile1 = { (n+1) * dx, (n+1) * dy }
 
-    t0 = @history[t0].@start_time
-    dt = @history[t1].@start_time - t0
+    t0 = @history[tile0].@start_time
+    dt = @history[tile1].@start_time - t0
     tiles = (t - t0) // dt + n
 
     puts "#{ dir_xy }"
@@ -104,7 +104,7 @@ class HistorySet
     puts "Spawn offset n: #{n}"
     puts "Tiles: #{tiles}"
 
-    prefix = @history[t1].@sizes
+    prefix = @history[tile1].@sizes
     puts "Prefix: #{prefix.size}"
 
     total = 0
@@ -122,7 +122,7 @@ class HistorySet
       tiles -= 1
     end
 
-    loop = @history[t1].@loop
+    loop = @history[tile1].@loop
     r = 0
     a = loop[(t + 0) & 1]
     b = loop[(t + 1) & 1]
@@ -150,6 +150,57 @@ class HistorySet
     puts
 
     total
+  end
+
+  def quadrant(dir_xy : Pt, t : Int32)
+    n = 2
+    dx, dy = dir_xy
+    tile0 = { n     * dx, dy }    # eg. 2,1
+    tile1 = { (n+1) * dx, dy }    # eg, 3,1
+
+    t0 = @history[tile0].@start_time
+    dt = @history[tile1].@start_time - t0
+    diags = (t - t0) // dt + n
+
+    puts "#{ dir_xy }"
+    puts "Spawn period dt: #{dt}"
+    puts "Spawn offset t0: #{t0}"
+    puts "Spawn offset n: #{n}"
+    puts "Diagonals: #{diags}"
+
+    prefix = @history[tile0].@sizes
+    puts "Prefix: #{prefix.size}"
+    puts
+
+    total = 0
+
+    loop do
+      diag_start_time = (diags - n) * dt + t0
+      puts "  #{dx*diags}, #{dy}: start time = #{diag_start_time}"
+      offset = t - diag_start_time
+      break if offset >= prefix.size
+      #puts "  #{dx*tiles}, #{dy*tiles}: offset = #{offset}"
+      puts "  #{dx*diags}, #{dy}: count = #{prefix[offset]} * #{diags}"
+
+      total += prefix[offset] * diags
+
+      diags -= 1
+    end
+
+    loop = @history[tile0].@loop
+    remainder = 0
+    while diags > 0
+      diag_start_time = (diags - n) * dt + t0
+      offset = (t - diag_start_time - prefix.size) & 1
+      puts "  #{dx*diags}, #{dy}: count = #{loop[offset]} * #{diags}"
+
+      remainder += loop[offset] * diags
+
+      diags -= 1
+    end
+
+
+    0
   end
 end
 
@@ -297,11 +348,18 @@ class Garden
     puts "Time: #{steps}"
 
     total = 0
-    total += history.centre({0, 0}, steps)
-    total += history.axis({0, 1},  steps)
-    total += history.axis({0, -1}, steps)
-    total += history.axis({1, 0},  steps)
-    total += history.axis({-1, 0}, steps)
+
+#    total += history.centre({0, 0}, steps)
+#
+#    total += history.axis({0, 1},  steps)
+#    total += history.axis({0, -1}, steps)
+#    total += history.axis({1, 0},  steps)
+#    total += history.axis({-1, 0}, steps)
+#
+    total += history.quadrant({ 1,  1}, steps)
+#    total += history.quadrant({-1,  1}, steps)
+#    total += history.quadrant({-1, -1}, steps)
+#    total += history.quadrant({ 1, -1}, steps)
 
     total
 
@@ -309,4 +367,4 @@ class Garden
 end
 
 g = Garden.new(AOC.input_lines)
-puts g.part2(45)
+puts g.part2(77)
