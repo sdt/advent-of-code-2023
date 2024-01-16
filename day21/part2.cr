@@ -79,11 +79,11 @@ class HistorySet
 
     t -= h.@sizes.size
 
-    puts "#{ dir_xy }"
-    puts "  #{dir_xy[0]}, #{dir_xy[1]}: count = #{h.@loop[t & 1]}"
+    #puts "#{ dir_xy }"
+    #puts "  #{dir_xy[0]}, #{dir_xy[1]}: count = #{h.@loop[t & 1]}"
     total = h.@loop[t & 1]
-    puts "Subtotal: #{total}"
-    puts
+    #puts "Subtotal: #{total}"
+    #puts
 
     total.to_i64
   end
@@ -98,14 +98,14 @@ class HistorySet
     dt = @history[tile1].@start_time - t0
     tiles : Int64 = ((t - t0) // dt + n).to_i64
 
-    puts "#{ dir_xy }"
-    puts "Spawn period dt: #{dt}"
-    puts "Spawn offset t0: #{t0}"
-    puts "Spawn offset n: #{n}"
-    puts "Tiles: #{tiles}"
+    #puts "#{ dir_xy }"
+    #puts "Spawn period dt: #{dt}"
+    #puts "Spawn offset t0: #{t0}"
+    #puts "Spawn offset n: #{n}"
+    #puts "Tiles: #{tiles}"
 
     prefix = @history[tile1].@sizes
-    puts "Prefix: #{prefix.size}"
+    #puts "Prefix: #{prefix.size}"
 
     total = 0_i64
 
@@ -115,7 +115,7 @@ class HistorySet
       offset = t - tile_start_time
       break if offset >= prefix.size
       #puts "  #{dx*tiles}, #{dy*tiles}: offset = #{offset}"
-      puts "  #{dx*tiles}, #{dy*tiles}: count = #{prefix[offset]}"
+      #puts "  #{dx*tiles}, #{dy*tiles}: count = #{prefix[offset]}"
 
       total += prefix[offset]
 
@@ -126,7 +126,7 @@ class HistorySet
     r = 0_i64
     a = (loop[(t + 0) & 1]).to_i64
     b = (loop[(t + 1) & 1]).to_i64
-    puts "Tiles remaining: #{tiles}"
+    #puts "Tiles remaining: #{tiles}"
     if tiles.even?
       r = (a + b) * tiles // 2
     else
@@ -145,9 +145,9 @@ class HistorySet
 #      tiles -= 1
 #    end
 
-    puts "Remainder: counted=#{ remainder} computed=#{r}"
-    puts "Subtotal: #{total}"
-    puts
+    #puts "Remainder: counted=#{ remainder} computed=#{r}"
+    #puts "Subtotal: #{total}"
+    #puts
 
     total
   end
@@ -162,25 +162,25 @@ class HistorySet
     dt = @history[tile1].@start_time - t0
     diags : Int64 = ((t - t0) // dt + n).to_i64
 
-    puts "#{ dir_xy }"
-    puts "Spawn period dt: #{dt}"
-    puts "Spawn offset t0: #{t0}"
-    puts "Spawn offset n: #{n}"
-    puts "Diagonals: #{diags}"
+    #puts "#{ dir_xy }"
+    #puts "Spawn period dt: #{dt}"
+    #puts "Spawn offset t0: #{t0}"
+    #puts "Spawn offset n: #{n}"
+    #puts "Diagonals: #{diags}"
 
     prefix = @history[tile0].@sizes
-    puts "Prefix: #{prefix.size}"
-    puts
+    #puts "Prefix: #{prefix.size}"
+    #puts
 
     total = 0_i64
 
     loop do
       diag_start_time = (diags - n) * dt + t0
-      puts "  #{dx*diags}, #{dy}: start time = #{diag_start_time}"
+      #puts "  #{dx*diags}, #{dy}: start time = #{diag_start_time}"
       offset = t - diag_start_time
       break if offset >= prefix.size
       #puts "  #{dx*tiles}, #{dy*tiles}: offset = #{offset}"
-      puts "  #{dx*diags}, #{dy}: count = #{prefix[offset]} * #{diags}"
+      #puts "  #{dx*diags}, #{dy}: count = #{prefix[offset]} * #{diags}"
 
       total += prefix[offset] * diags
 
@@ -190,7 +190,7 @@ class HistorySet
     loop = @history[tile0].@loop
     a = loop[(t + 1) & 1]
     b = loop[(t + 0) & 1]
-    puts "A B = #{a} #{b}"
+    #puts "A B = #{a} #{b}"
 
     r = 0_i64
     if diags.even?
@@ -210,9 +210,9 @@ class HistorySet
 #
 #      diags -= 1
 #    end
-    puts "Remainder: counted=#{ remainder} computed=#{r}"
-    puts "Subtotal: #{total}"
-    puts
+    #puts "Remainder: counted=#{ remainder} computed=#{r}"
+    #puts "Subtotal: #{total}"
+    #puts
 
     total
   end
@@ -359,7 +359,7 @@ class Garden
 
     # {0,N} line
 
-    puts "Time: #{steps}"
+    #puts "Time: #{steps}"
 
     total = 0_i64
 
