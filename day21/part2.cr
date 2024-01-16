@@ -69,7 +69,7 @@ class HistorySet
   def complete? : Bool
     n = 3
     m = 2
-    tiles = { {-n,0}, {n,0}, {0,n}, {0,-n}, {m,m}, {-m,m}, {m,-m}, {-m,-m} }
+    tiles = { {-n,0}, {n,0}, {0,n}, {0,-n}, {m,1}, {-m,1}, {m,-1}, {-m,-1} }
 
     tiles.all? { |tile_xy| @history.has_key?(tile_xy) && @history[tile_xy].complete? }
   end
@@ -381,4 +381,5 @@ class Garden
 end
 
 g = Garden.new(AOC.input_lines)
+#puts g.part2(5000)
 puts g.part2(26501365)
